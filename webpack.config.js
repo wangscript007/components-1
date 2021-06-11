@@ -34,6 +34,34 @@ module.exports = {
     }, {
       test: /\.tsx?$/,
       use: ['ts-loader']
+    }, {
+      test: /\.s?css$/,
+      use: ['style-loader', 'css-loader', {
+        loader: 'postcss-loader',
+        options: {
+          plugins() {
+            return [require('autoprefixer')];
+          }
+        }
+      }, 'sass-loader'],
+    }, {
+      test: /\.(png|jpe?g|gif|svg)(\?.*)?$/,
+      use: [{
+        loader: 'url-loader',
+        options: {
+          limit: 10000,
+          name: path.posix.join('static/', `img/[name][hash].[ext]`)
+        }
+      }],
+    }, {
+      test: /\.(woff2?|eot|ttf|otf)(\?.*)?$/,
+      use: [{
+        loader: 'url-loader',
+        options: {
+          limit: 10000,
+          name: path.posix.join('static/', `fonts/[name][hash].[ext]`)
+        }
+      }],
     }]
   },
   plugins: [

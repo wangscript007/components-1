@@ -27,7 +27,7 @@ import {
   SlotRenderFn, TBClipboard, TBEvent, TBSelection,
   VElement,
   ViewData, SingleSlotRenderFn,
-  BrComponent, ContextMenuAction, VTextNode, DynamicKeymap, KeymapAction
+  BrComponent, ContextMenuAction, VTextNode, DynamicKeymap, KeymapAction, MarkdownSupport, MarkdownGrammarInterceptor
 } from '@textbus/core';
 
 export const codeStyles = {
@@ -347,6 +347,42 @@ class PreComponentDynamicKeymap implements DynamicKeymap<PreComponent> {
   }
 }
 
+@Injectable()
+class PreComponentMarkdownSupport implements MarkdownSupport {
+  provide(): MarkdownGrammarInterceptor {
+    let content = '';
+    return {
+      key: 'Enter',
+      match(c: string) {
+        const matchString = languageList.map(i => i.label || i.value).concat('js', 'ts').join('|').replace(/\+/, '\\+');
+        const reg = new RegExp(`^\`\`\`(${matchString})$`, 'i');
+        if (reg.test(c)) {
+          content = c;
+          return true
+        }
+
+        content = '';
+        return false;
+      },
+      componentFactory() {
+        const matchString = content.replace(/`/g, '').replace(/\+/, '\\+');
+        for (const item of languageList) {
+          const reg = new RegExp(`^${matchString}$`, 'i')
+          if (reg.test(item.label || item.value)) {
+            return new PreComponent(item.value, '');
+          }
+        }
+        if (/^js$/i.test(matchString)) {
+          return new PreComponent('Javascript', '');
+        }
+        if (/^ts$/i.test(matchString)) {
+          return new PreComponent('Typescript', '');
+        }
+      }
+    };
+  }
+}
+
 @Component({
   loader: new PreComponentLoader(),
   providers: [{
@@ -355,6 +391,9 @@ class PreComponentDynamicKeymap implements DynamicKeymap<PreComponent> {
   }, {
     provide: DynamicKeymap,
     useClass: PreComponentDynamicKeymap
+  }, {
+    provide: MarkdownSupport,
+    useClass: PreComponentMarkdownSupport
   }],
   styles: [
     `<style>

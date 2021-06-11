@@ -14,7 +14,7 @@ import {
   TBEvent,
   TBSelection,
   VElement,
-  ViewData
+  ViewData, MarkdownSupport, MarkdownGrammarInterceptor
 } from '@textbus/core';
 
 class BlockComponentLoader implements ComponentLoader {
@@ -53,11 +53,35 @@ class BlockComponentInterceptor implements Interceptor<BlockComponent> {
   }
 }
 
+@Injectable()
+class BlockComponentMarkdownSupport implements MarkdownSupport {
+  provide(): MarkdownGrammarInterceptor {
+    let content = '';
+    return {
+      key: ' ',
+      match(c: string) {
+        if (/^#{1,6}$/.test(c)) {
+          content = c;
+          return true
+        }
+        content = '';
+        return false
+      },
+      componentFactory(): BlockComponent {
+        return new BlockComponent('h' + content.length)
+      }
+    }
+  }
+}
+
 @Component({
   loader: new BlockComponentLoader(),
   providers: [{
     provide: Interceptor,
     useClass: BlockComponentInterceptor
+  }, {
+    provide: MarkdownSupport,
+    useClass: BlockComponentMarkdownSupport
   }],
   styles: [
     `blockquote {padding: 10px 15px; border-left: 10px solid #dddee1; background-color: #f8f8f9; margin: 1em 0; border-radius: 4px;}`
