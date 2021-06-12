@@ -56,18 +56,12 @@ class BlockComponentInterceptor implements Interceptor<BlockComponent> {
 @Injectable()
 class BlockComponentMarkdownSupport implements MarkdownSupport {
   provide(): MarkdownGrammarInterceptor {
-    let content = '';
     return {
       key: ' ',
-      match(c: string) {
-        if (/^#{1,6}$/.test(c)) {
-          content = c;
-          return true
-        }
-        content = '';
-        return false
+      match(content: string) {
+        return /^#{1,6}$/.test(content)
       },
-      componentFactory(): BlockComponent {
+      componentFactory(content): BlockComponent {
         return new BlockComponent('h' + content.length)
       }
     }

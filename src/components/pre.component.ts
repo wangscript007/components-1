@@ -350,21 +350,14 @@ class PreComponentDynamicKeymap implements DynamicKeymap<PreComponent> {
 @Injectable()
 class PreComponentMarkdownSupport implements MarkdownSupport {
   provide(): MarkdownGrammarInterceptor {
-    let content = '';
     return {
       key: 'Enter',
       match(c: string) {
         const matchString = languageList.map(i => i.label || i.value).concat('js', 'ts').join('|').replace(/\+/, '\\+');
         const reg = new RegExp(`^\`\`\`(${matchString})$`, 'i');
-        if (reg.test(c)) {
-          content = c;
-          return true
-        }
-
-        content = '';
-        return false;
+        return reg.test(c)
       },
-      componentFactory() {
+      componentFactory(content) {
         const matchString = content.replace(/`/g, '').replace(/\+/, '\\+');
         for (const item of languageList) {
           const reg = new RegExp(`^${matchString}$`, 'i')
