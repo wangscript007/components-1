@@ -6,7 +6,7 @@ import {
   Fragment,
   VElement,
   TBEvent, SlotRenderFn, Component, Interceptor, TBSelection, SingleSlotRenderFn,
-  BrComponent, DynamicKeymap, KeymapAction
+  BrComponent, DynamicKeymap, KeymapAction, MarkdownSupport, MarkdownGrammarInterceptor
 } from '@textbus/core';
 
 import { BlockComponent } from './block.component';
@@ -132,6 +132,22 @@ class ListComponentInterceptor implements Interceptor<ListComponent> {
   }
 }
 
+@Injectable()
+class ListComponentMarkdownSupport implements MarkdownSupport {
+  provide(): MarkdownGrammarInterceptor {
+    return {
+      key: ' ',
+      match: /^(1\.|[-+*])$/,
+      componentFactory(content: string) {
+        const tagName = /[-+*]/.test(content) ? 'ul' : 'ol'
+        const component = new ListComponent(tagName);
+        component.slots.push(new Fragment());
+        return component;
+      }
+    };
+  }
+}
+
 @Component({
   loader: new ListComponentLoader(['ul', 'ol']),
   providers: [{
@@ -140,6 +156,9 @@ class ListComponentInterceptor implements Interceptor<ListComponent> {
   }, {
     provide: DynamicKeymap,
     useClass: ListComponentDynamicKeymap
+  }, {
+    provide: MarkdownSupport,
+    useClass: ListComponentMarkdownSupport
   }]
 })
 export class ListComponent extends BranchAbstractComponent {
